@@ -9,30 +9,22 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Prata&display=swap" rel="stylesheet">
 <style>
-  /* Палитра сайта: лавандово-белая база, фиолетовый акцент, золото */
+  /* Палитра мастер-класса (site/masterclass-bordo.html): бежевая база, бордо в активных элементах.
+     Одна тема для светлого и тёмного Telegram. */
   :root {
-    --bg: #F6F2FA;
-    --card: #FFFFFF;
-    --ink: #2B2140;
-    --muted: #8A7FA0;
-    --faint: #C9BFD8;
-    --line: #E9DCF5;
-    --accent: #A855F7;
-    --accent-ink: #FFFFFF;
-    --accent-soft: #F1E6FE;
-    --gold: #E3B34C;
+    --bg: #EADDC6;
+    --card: #F5ECDA;
+    --ink: #2A0810;
+    --muted: #7D5D5F;
+    --faint: #BBA691;
+    --line: #DCCAAF;
+    --accent: #A32A3B;
+    --accent-ink: #F7EFDC;
+    --accent-fg: #A32A3B;
+    --accent-soft: #E6CFC3;
+    --gold: #A32A3B;
     --danger: #C0392B;
-  }
-  :root[data-theme="dark"] {
-    --bg: #1C1130;
-    --card: #2A1B45;
-    --ink: #F6F2FA;
-    --muted: #A99BC4;
-    --faint: #5B4A7A;
-    --line: #3A2A5A;
-    --accent: #B474F9;
-    --accent-ink: #FFFFFF;
-    --accent-soft: #3D2766;
+    --shadow: rgba(42, 8, 16, .22);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -51,13 +43,13 @@
   .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
   .title { font-family: "Prata", serif; font-weight: 400; font-size: 24px; line-height: 1.2; margin-top: 4px; }
 
-  .card { background: var(--card); border-radius: 18px; padding: 14px 12px 12px; box-shadow: 0 6px 24px -14px rgba(42, 27, 69, .35); }
+  .card { background: var(--card); border-radius: 18px; padding: 14px 12px 12px; box-shadow: 0 6px 24px -14px var(--shadow); }
 
   .month-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 10px; }
   .month-name { font-family: "Prata", serif; font-size: 19px; }
   .arrow {
     width: 36px; height: 36px; border-radius: 50%;
-    display: grid; place-items: center; font-size: 20px; color: var(--accent);
+    display: grid; place-items: center; font-size: 20px; color: var(--accent-fg);
     transition: background .15s;
   }
   .arrow:active { background: var(--accent-soft); }
@@ -75,7 +67,7 @@
   .day:active:not(:disabled) { transform: scale(.92); }
   .day.free::after {
     content: ""; position: absolute; left: 50%; bottom: 5px;
-    width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent);
+    width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent-fg);
   }
   .day.today { box-shadow: inset 0 0 0 1.5px var(--line); }
   .day:disabled { color: var(--faint); font-weight: 500; cursor: default; }
@@ -83,7 +75,7 @@
   .day.selected::after { background: var(--accent-ink); }
 
   .legend { display: flex; gap: 14px; justify-content: center; margin-top: 10px; font-size: 12px; color: var(--muted); }
-  .legend i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; vertical-align: middle; }
+  .legend i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-fg); margin-right: 6px; vertical-align: middle; }
 
   .times { margin-top: 22px; }
   .times-title { font-weight: 700; font-size: 16px; margin-bottom: 2px; }
@@ -111,7 +103,7 @@
   .state h2 { font-family: "Prata", serif; font-weight: 400; font-size: 21px; color: var(--ink); margin-bottom: 8px; }
   .spinner {
     width: 28px; height: 28px; margin: 0 auto 14px; border-radius: 50%;
-    border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite;
+    border: 3px solid var(--line); border-top-color: var(--accent-fg); animation: spin .8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   [hidden] { display: none !important; }
@@ -167,13 +159,9 @@
   if (tg) {
     tg.ready();
     tg.expand();
-    const applyTheme = () => {
-      document.documentElement.dataset.theme = tg.colorScheme === "dark" ? "dark" : "light";
-      const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
-      try { tg.setHeaderColor(bg); tg.setBackgroundColor(bg); } catch (e) {}
-    };
-    applyTheme();
-    tg.onEvent("themeChanged", applyTheme);
+    // Тема одна для светлого и тёмного Telegram — красим шапку и фон в бежевый
+    const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+    try { tg.setHeaderColor(bg); tg.setBackgroundColor(bg); } catch (e) {}
   }
 
   const haptic = (kind) => { try { tg.HapticFeedback.selectionChanged(); } catch (e) {} };
@@ -311,7 +299,7 @@
     if (!tg) return;
     const mb = tg.MainButton;
     mb.setText(text);
-    try { mb.setParams({ color: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(), text_color: "#FFFFFF" }); } catch (e) {}
+    try { mb.setParams({ color: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(), text_color: getComputedStyle(document.documentElement).getPropertyValue("--accent-ink").trim() }); } catch (e) {}
     if (chosen) { mb.show(); mb.enable(); } else { mb.show(); mb.disable(); }
   }
 
