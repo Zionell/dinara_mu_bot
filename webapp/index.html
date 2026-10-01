@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Запись к Динаре</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Prata&display=swap" rel="stylesheet">
+<style>
+  /* Палитра сайта: лавандово-белая база, фиолетовый акцент, золото */
+  :root {
+    --bg: #F6F2FA;
+    --card: #FFFFFF;
+    --ink: #2B2140;
+    --muted: #8A7FA0;
+    --faint: #C9BFD8;
+    --line: #E9DCF5;
+    --accent: #A855F7;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #F1E6FE;
+    --gold: #E3B34C;
+    --danger: #C0392B;
+  }
+  :root[data-theme="dark"] {
+    --bg: #1C1130;
+    --card: #2A1B45;
+    --ink: #F6F2FA;
+    --muted: #A99BC4;
+    --faint: #5B4A7A;
+    --line: #3A2A5A;
+    --accent: #B474F9;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #3D2766;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: "Manrope", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.4;
+    padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+    min-height: 100vh;
+    user-select: none;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+  .head { margin-bottom: 18px; }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+  .title { font-family: "Prata", serif; font-weight: 400; font-size: 24px; line-height: 1.2; margin-top: 4px; }
+
+  .card { background: var(--card); border-radius: 18px; padding: 14px 12px 12px; box-shadow: 0 6px 24px -14px rgba(42, 27, 69, .35); }
+
+  .month-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 10px; }
+  .month-name { font-family: "Prata", serif; font-size: 19px; }
+  .arrow {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 20px; color: var(--accent);
+    transition: background .15s;
+  }
+  .arrow:active { background: var(--accent-soft); }
+  .arrow:disabled { color: var(--faint); cursor: default; background: none; }
+
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 4px; text-align: center; }
+  .wd { font-size: 12px; font-weight: 600; color: var(--muted); padding-bottom: 6px; }
+  .wd:nth-child(n+6) { color: var(--faint); }
+  .day {
+    position: relative; justify-self: center;
+    width: 40px; height: 40px; border-radius: 50%;
+    font-weight: 600; font-variant-numeric: tabular-nums;
+    transition: background .15s, color .15s, transform .1s;
+  }
+  .day:active:not(:disabled) { transform: scale(.92); }
+  .day.free::after {
+    content: ""; position: absolute; left: 50%; bottom: 5px;
+    width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent);
+  }
+  .day.today { box-shadow: inset 0 0 0 1.5px var(--line); }
+  .day:disabled { color: var(--faint); font-weight: 500; cursor: default; }
+  .day.selected { background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 16px -6px var(--accent); }
+  .day.selected::after { background: var(--accent-ink); }
+
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; vertical-align: middle; }
+
+  .times { margin-top: 22px; }
+  .times-title { font-weight: 700; font-size: 16px; margin-bottom: 2px; }
+  .times-title::first-letter { text-transform: uppercase; }
+  .times-sub { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .group-label { font-size: 12px; font-weight: 600; color: var(--muted); margin: 12px 0 8px; }
+  .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+  .chip {
+    height: 44px; border-radius: 12px; background: var(--card);
+    box-shadow: inset 0 0 0 1.5px var(--line);
+    font-weight: 700; font-variant-numeric: tabular-nums;
+    transition: background .15s, color .15s, box-shadow .15s;
+  }
+  .chip.selected { background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 16px -6px var(--accent); }
+
+  /* Запасная кнопка, если клиент Telegram не показывает MainButton */
+  .submit {
+    display: none; width: 100%; height: 52px; margin-top: 22px; border-radius: 14px;
+    background: var(--accent); color: var(--accent-ink); font-weight: 700;
+  }
+  .submit:disabled { opacity: .45; }
+  .no-main .submit { display: block; }
+
+  .state { text-align: center; padding: 64px 12px; color: var(--muted); }
+  .state h2 { font-family: "Prata", serif; font-weight: 400; font-size: 21px; color: var(--ink); margin-bottom: 8px; }
+  .spinner {
+    width: 28px; height: 28px; margin: 0 auto 14px; border-radius: 50%;
+    border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+  <div id="loading" class="state"><div class="spinner"></div>Загружаю свободное время…</div>
+  <div id="error" class="state" hidden><h2 id="error-title"></h2><p id="error-text"></p></div>
+
+  <main id="app" hidden>
+    <header class="head">
+      <div class="eyebrow" id="eyebrow">Запись</div>
+      <h1 class="title" id="service"></h1>
+    </header>
+
+    <section class="card">
+      <div class="month-nav">
+        <button class="arrow" id="prev" aria-label="Предыдущий месяц">‹</button>
+        <div class="month-name" id="month-name"></div>
+        <button class="arrow" id="next" aria-label="Следующий месяц">›</button>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="legend"><span><i></i>есть свободное время</span></div>
+    </section>
+
+    <section class="times" id="times">
+      <div class="times-title" id="day-title"></div>
+      <div class="times-sub" id="day-sub"></div>
+      <div id="slots"></div>
+    </section>
+
+    <button class="submit" id="submit" disabled>Выберите время</button>
+  </main>
+
+<script>
+(() => {
+  const tg = window.Telegram && Telegram.WebApp;
+  const $ = (id) => document.getElementById(id);
+
+  const MONTHS = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+  const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+
+  // Даты — ключи YYYY-MM-DD в часовом поясе мастера; считаем их как UTC, чтобы пояс телефона не мешал
+  const toUtc = (key) => { const [y, m, d] = key.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+  const keyOf = (date) => date.toISOString().slice(0, 10);
+  const fmt = (key, opts) => toUtc(key).toLocaleDateString("ru-RU", { timeZone: "UTC", ...opts });
+  const plural = (n, one, few, many) =>
+    n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many;
+
+  let data, month, day, slot, sending = false;
+
+  // ---------- Тема ----------
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    const applyTheme = () => {
+      document.documentElement.dataset.theme = tg.colorScheme === "dark" ? "dark" : "light";
+      const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+      try { tg.setHeaderColor(bg); tg.setBackgroundColor(bg); } catch (e) {}
+    };
+    applyTheme();
+    tg.onEvent("themeChanged", applyTheme);
+  }
+
+  const haptic = (kind) => { try { tg.HapticFeedback.selectionChanged(); } catch (e) {} };
+  const alertBox = (text) => new Promise((resolve) => (tg && tg.showAlert ? tg.showAlert(text, resolve) : (alert(text), resolve())));
+
+  function showError(title, text) {
+    $("loading").hidden = true;
+    $("app").hidden = true;
+    $("error").hidden = false;
+    $("error-title").textContent = title;
+    $("error-text").textContent = text;
+    if (tg) tg.MainButton.hide();
+  }
+
+  // ---------- API ----------
+  async function api(path, body) {
+    const res = await fetch(path + location.search, {
+      method: body ? "POST" : "GET",
+      headers: { Authorization: "tma " + tg.initData, ...(body ? { "Content-Type": "application/json" } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw Object.assign(new Error(json.error || "server"), { code: json.error || "server" });
+    return json;
+  }
+
+  function handleApiError(err) {
+    if (err.code === "expired") return showError("Запись устарела", "Вернитесь в чат и начните запись заново — кнопка календаря появится снова.");
+    if (err.code === "unauthorized") return showError("Не получилось открыть", "Откройте календарь кнопкой из чата с ботом.");
+    showError("Что-то пошло не так", "Попробуйте открыть календарь ещё раз чуть позже.");
+  }
+
+  async function load() {
+    try {
+      data = await api("/api/slots");
+    } catch (err) {
+      return handleApiError(err);
+    }
+    const free = Object.keys(data.days).sort();
+    if (!free.length) return showError("Свободного времени нет", "Напишите Динаре напрямую 🤍");
+
+    $("eyebrow").textContent = data.reschedule ? "Перенос записи" : "Запись";
+    $("service").textContent = data.service;
+    // Сохраняем выбор при обновлении, если день ещё свободен
+    if (!day || !data.days[day]) day = free[0];
+    if (slot && !(data.days[day] || []).some((s) => s.t === slot)) slot = undefined;
+    month = month || day.slice(0, 7);
+
+    $("loading").hidden = true;
+    $("error").hidden = true;
+    $("app").hidden = false;
+    render();
+  }
+
+  // ---------- Календарь ----------
+  const monthsRange = () => {
+    const out = [];
+    for (let k = data.firstOpen.slice(0, 7); k <= data.lastOpen.slice(0, 7); ) {
+      out.push(k);
+      const d = toUtc(k + "-01");
+      d.setUTCMonth(d.getUTCMonth() + 1);
+      k = keyOf(d).slice(0, 7);
+    }
+    return out;
+  };
+
+  function renderCalendar() {
+    const months = monthsRange();
+    const idx = months.indexOf(month);
+    $("prev").disabled = idx <= 0;
+    $("next").disabled = idx >= months.length - 1;
+    const [y, m] = month.split("-").map(Number);
+    $("month-name").textContent = `${MONTHS[m - 1]} ${y}`;
+
+    const grid = $("grid");
+    grid.replaceChildren(...WEEKDAYS.map((w) => Object.assign(document.createElement("div"), { className: "wd", textContent: w })));
+    const first = toUtc(month + "-01");
+    const offset = (first.getUTCDay() + 6) % 7;
+    const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    for (let i = 0; i < offset; i++) grid.append(document.createElement("div"));
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = `${month}-${String(d).padStart(2, "0")}`;
+      const btn = document.createElement("button");
+      btn.className = "day";
+      btn.textContent = d;
+      const slots = data.days[key];
+      if (slots) {
+        btn.classList.add("free");
+        btn.setAttribute("aria-label", `${fmt(key, { day: "numeric", month: "long" })}, ${slots.length} ${plural(slots.length, "окно", "окна", "окон")}`);
+        btn.onclick = () => { if (day !== key) { day = key; slot = undefined; haptic(); render(); } };
+      } else {
+        btn.disabled = true;
+      }
+      if (key === data.firstOpen) btn.classList.add("today");
+      if (key === day) btn.classList.add("selected");
+      grid.append(btn);
+    }
+  }
+
+  function renderSlots() {
+    const slots = data.days[day] || [];
+    $("day-title").textContent = fmt(day, { weekday: "long", day: "numeric", month: "long" });
+    $("day-sub").textContent = `${slots.length} ${plural(slots.length, "свободное окно", "свободных окна", "свободных окон")}`;
+
+    const groups = [["Утро", (h) => h < 12], ["День", (h) => h >= 12 && h < 17], ["Вечер", (h) => h >= 17]];
+    const box = $("slots");
+    box.replaceChildren();
+    for (const [label, test] of groups) {
+      const items = slots.filter((s) => test(Number(s.label.slice(0, 2))));
+      if (!items.length) continue;
+      box.append(Object.assign(document.createElement("div"), { className: "group-label", textContent: label }));
+      const chips = document.createElement("div");
+      chips.className = "chips";
+      for (const s of items) {
+        const btn = document.createElement("button");
+        btn.className = "chip" + (s.t === slot ? " selected" : "");
+        btn.textContent = s.label;
+        btn.onclick = () => { slot = s.t; haptic(); render(); };
+        chips.append(btn);
+      }
+      box.append(chips);
+    }
+  }
+
+  function renderButton() {
+    const chosen = (data.days[day] || []).find((s) => s.t === slot);
+    const text = chosen
+      ? `${data.reschedule ? "Перенести на" : "Записаться"} · ${fmt(day, { day: "numeric", month: "short" })}, ${chosen.label}`
+      : "Выберите время";
+    const btn = $("submit");
+    btn.textContent = text;
+    btn.disabled = !chosen || sending;
+
+    if (!tg) return;
+    const mb = tg.MainButton;
+    mb.setText(text);
+    try { mb.setParams({ color: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(), text_color: "#FFFFFF" }); } catch (e) {}
+    if (chosen) { mb.show(); mb.enable(); } else { mb.show(); mb.disable(); }
+  }
+
+  function render() {
+    renderCalendar();
+    renderSlots();
+    renderButton();
+  }
+
+  $("prev").onclick = () => { const ms = monthsRange(); month = ms[Math.max(0, ms.indexOf(month) - 1)]; haptic(); renderCalendar(); };
+  $("next").onclick = () => { const ms = monthsRange(); month = ms[Math.min(ms.length - 1, ms.indexOf(month) + 1)]; haptic(); renderCalendar(); };
+
+  // ---------- Отправка ----------
+  async function submit() {
+    if (!slot || sending) return;
+    sending = true;
+    renderButton();
+    if (tg) tg.MainButton.showProgress();
+    try {
+      await api("/api/pick", { start: slot });
+      try { tg.HapticFeedback.notificationOccurred("success"); } catch (e) {}
+      tg.close();
+    } catch (err) {
+      sending = false;
+      if (tg) tg.MainButton.hideProgress();
+      if (err.code === "gone") {
+        await alertBox("Это время только что заняли 😔 Выберите другое.");
+        slot = undefined;
+        return load();
+      }
+      handleApiError(err);
+    }
+  }
+  $("submit").onclick = submit;
+
+  // ---------- Старт ----------
+  if (!tg || !tg.initData) {
+    showError("Откройте в Telegram", "Календарь записи работает внутри бота — нажмите «Выбрать дату и время» в чате.");
+    return;
+  }
+  // Старые клиенты Telegram без MainButton — показываем свою кнопку
+  if (!tg.isVersionAtLeast || !tg.isVersionAtLeast("6.0")) document.body.classList.add("no-main");
+  tg.MainButton.onClick(submit);
+  load();
+})();
+</script>
+</body>
+</html>

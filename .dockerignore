@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+*.md
+
+# Ключи сервисного аккаунта Google
+**/*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!drizzle/meta/*.json
+nginx

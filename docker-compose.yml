@@ -1,0 +1,40 @@
+services:
+  bot:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+    ports:
+      # Только localhost: снаружи бот доступен через nginx (nginx/bot.conf.example)
+      - "127.0.0.1:${PORT:-3000}:${PORT:-3000}"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # Локальный PostgreSQL — только если нет своего (запуск: docker compose --profile postgres up -d).
+  # Тогда в .env: DATABASE_URL=postgres://dinara:${POSTGRES_PASSWORD:-dinara}@postgres:5432/dinara
+  postgres:
+    image: postgres:18-alpine
+    profiles: ["postgres"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dinara
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dinara}
+      POSTGRES_DB: dinara
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dinara -d dinara"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
