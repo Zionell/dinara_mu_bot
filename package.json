@@ -15,10 +15,10 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@googleapis/calendar": "^20.0.1",
     "@grammyjs/runner": "^2.0.3",
     "dotenv": "^18.0.4",
     "drizzle-orm": "^0.45.3",
-    "googleapis": "^182.0.0",
     "grammy": "^1.46.0",
     "pg": "^8.23.1"
   },

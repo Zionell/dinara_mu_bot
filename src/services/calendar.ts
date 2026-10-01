@@ -1,4 +1,4 @@
-import { google, type calendar_v3 } from "googleapis";
+import { auth, calendar, type calendar_v3 } from "@googleapis/calendar";
 import { config } from "../config.js";
 import { MASTER_TEXTS } from "../data/master.js";
 import { reportError } from "../logger.js";
@@ -10,12 +10,12 @@ let client: calendar_v3.Calendar | undefined;
 function getClient(): calendar_v3.Calendar | undefined {
   if (!config.google) return undefined;
   if (!client) {
-    const auth = new google.auth.JWT({
+    const jwt = new auth.JWT({
       email: config.google.email,
       key: config.google.privateKey,
       scopes: ["https://www.googleapis.com/auth/calendar"],
     });
-    client = google.calendar({ version: "v3", auth });
+    client = calendar({ version: "v3", auth: jwt });
   }
   return client;
 }
